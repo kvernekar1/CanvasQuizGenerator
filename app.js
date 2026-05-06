@@ -10,7 +10,7 @@
   const uploadScreen = document.getElementById('upload-screen');
   const downloadScreen = document.getElementById('download-screen');
   const downloadLink = document.getElementById('downloadLink');
-  //const downloadName = document.getElementById('downloadName');
+  const downloadName = document.getElementById('downloadName');
   const againBtn = document.getElementById('againBtn');
 
   let currentFile = null;
@@ -40,21 +40,42 @@
     hide(fileInfo);
   });
 
-  convertBtn.addEventListener('click',  async () => {
+  convertBtn.addEventListener('click', async () => {
     if(!currentFile) return;
     hide(fileInfo);
     show(processing);
-    const response = await fetch("/convert", {
-       method: "POST",
-       body: currentFile,
-       headers: {
-         "Content-Type": "application/octet-stream",
-         "X-Filename": currentFile.name
-       }
-    });
-    const QTIfile = response.blob()
-    downloadLink.href = URL.createObjectURL(QTIfile);
-    downloadLink.click()
+
+    try {
+      const formData = new FormData();
+      formData.append('file', currentFile);
+
+      const response = await fetch('/convert', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(err || 'Conversion failed');
+      }
+
+      const blob = await response.blob();
+      if(currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+      currentObjectUrl = URL.createObjectURL(blob);
+
+      const outName = (currentFile.name.replace(/\.(pdf|docx)$/i, '') || 'converted') + '.zip';
+      downloadLink.href = currentObjectUrl;
+      downloadLink.download = outName;
+      downloadName.textContent = outName;
+
+      hide(processing);
+      hide(uploadScreen);
+      show(downloadScreen);
+    } catch(err) {
+      hide(processing);
+      show(fileInfo);
+      alert('Error during conversion: ' + err.message);
+    }
   });
 
   againBtn.addEventListener('click', () => {
@@ -75,7 +96,6 @@
       dropzone.classList.add('dragover');
     });
   });
-  
   ['dragleave','drop'].forEach(evt => {
     dropzone.addEventListener(evt, (e) => {
       e.preventDefault();
