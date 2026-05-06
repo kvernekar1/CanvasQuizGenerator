@@ -63,7 +63,7 @@
       if(currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
       currentObjectUrl = URL.createObjectURL(blob);
 
-      const outName = (currentFile.name.replace(/\.(pdf|docx)$/i, '') || 'converted') + '.zip';
+      const outName = "canvas_quiz.zip";
       downloadLink.href = currentObjectUrl;
       downloadLink.download = outName;
       downloadName.textContent = outName;
