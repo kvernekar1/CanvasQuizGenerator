@@ -262,7 +262,5 @@ def convert(json_input, output_zip: str = "canvas_quiz.zip", quiz_title: str = "
     with zipfile.ZipFile(output_zip, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("imsmanifest.xml", manifest_xml)
         zf.writestr(assessment_filename, qti_xml)
-
-    print(f"QTI package written to: {output_zip}")
     return output_zip
 
