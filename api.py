@@ -9,21 +9,27 @@ import os
 
 app = FastAPI()
 
+
 @app.post("/convert")
 def convertToQTI(file: UploadFile = File(...)):
     text = ""
-    with pdfplumber.open(file) as pdf:
+    with pdfplumber.open(file.file) as pdf:
         for page in pdf.pages:
             text += page.extract_text() + "\n"
     json_str = convertToJson(text)
     outputfile = convert(json_str, output_zip="canvas_quiz.zip", quiz_title="Quiz")
-    return FileResponse(outputfile, media_type="application/zip", filename="canvas_quiz.zip")
+    return FileResponse(
+        outputfile, media_type="application/zip", filename="canvas_quiz.zip"
+    )
+
 
 def convertToJson(text):
     client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        config=types.GenerateContentConfig(system_instruction="You are excellent at converting quizzes into JSON. Respond only in JSON format, and do not try to format it with backticks. The brackets must be first."),
+        config=types.GenerateContentConfig(
+            system_instruction="You are excellent at converting quizzes into JSON. Respond only in JSON format, and do not try to format it with backticks. The brackets must be first."
+        ),
         contents=f"""
         Can you please convert the following test I have into a JSON object with questions in it?
         It will contain multiple-choice questions, free-response questions, matching questions, and true/false questions.
@@ -90,8 +96,9 @@ def convertToJson(text):
         {text}
 
         Thank you!
-        """
+        """,
     )
     return response.text
+
 
 app.mount("/", StaticFiles(directory=".", html=True), name="static")
