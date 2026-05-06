@@ -12,7 +12,7 @@ app = FastAPI()
 @app.post("/convert")
 def convertToQTI(file: UploadFile = File(...)):
     text = ""
-    with pdfplumber.open(file.file) as pdf:
+    with pdfplumber.open(file) as pdf:
         for page in pdf.pages:
             text += page.extract_text() + "\n"
     json_str = convertToJson(text)
