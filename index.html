@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PDF/DOCX → QTI Converter</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="brand">
+        <div class="logo">Q</div>
+        <div class="brand-text">
+          <div class="brand-title">QTI Converter</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="container">
+      <section class="hero">
+        <h1>Convert PDF or DOCX to QTI</h1>
+        <p class="hero-sub">Quickly convert your PDF or Word (.docx) files into a downloadable QTI (XML) package. No accounts, no uploads — everything runs locally in your browser.</p>
+      </section>
+
+      <section id="upload-screen" class="screen">
+      <div id="dropzone" class="dropzone" tabindex="0">
+        <input id="fileInput" type="file" accept=".pdf,.docx" hidden>
+        <div class="drop-content">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 5 17 10"/><line x1="12" y1="5" x2="12" y2="19"/></svg>
+          <p class="lead">Drag & drop a PDF or DOCX file here</p>
+          <p class="muted">Or click to choose a file</p>
+          <button id="chooseBtn" class="btn">Choose file</button>
+        </div>
+      </div>
+
+      <div id="fileInfo" class="file-info hidden">
+        <p id="fileName" class="file-name"></p>
+        <div class="controls">
+          <button id="convertBtn" class="btn primary">Convert</button>
+          <button id="cancelBtn" class="btn">Cancel</button>
+        </div>
+      </div>
+
+      <div id="processing" class="hidden">
+        <p>Converting…</p>
+        <div class="spinner" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <section id="download-screen" class="screen hidden">
+      <h2>Conversion complete</h2>
+      <p id="downloadName" class="file-name"></p>
+      <a id="downloadLink" class="btn primary" href="#">Download converted QTI</a>
+      <div style="margin-top:12px">
+        <button id="againBtn" class="btn">Convert another file</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
