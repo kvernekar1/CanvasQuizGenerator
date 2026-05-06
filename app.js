@@ -25,7 +25,7 @@
     show(fileInfo);
   }
 
-  chooseBtn.addEventListener('click', () => fileInput.click());
+  chooseBtn.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
   dropzone.addEventListener('click', () => fileInput.click());
 
   fileInput.addEventListener('change', (e) => {
