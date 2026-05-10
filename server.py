@@ -18,9 +18,7 @@ def convertToQTI(file: UploadFile = File(...)):
             text += page.extract_text() + "\n"
     json_str = convertToJson(text)
     outputfile = convert(json_str, output_zip="canvas_quiz.zip", quiz_title="Quiz")
-    return FileResponse(
-        outputfile, media_type="application/zip", filename="canvas_quiz.zip"
-    )
+    return FileResponse(outputfile, media_type="application/zip", filename="canvas_quiz.zip")
 
 
 def convertToJson(text):
