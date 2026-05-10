@@ -4,9 +4,11 @@ from fastapi.staticfiles import StaticFiles
 from google import genai
 from google.genai import types
 from json_to_qti import convert
+from dotenv import load_dotenv
 import pdfplumber
 import os
 
+load_dotenv()
 app = FastAPI()
 
 
@@ -22,7 +24,7 @@ def convertToQTI(file: UploadFile = File(...)):
 
 
 def convertToJson(text):
-    client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
+    client = genai.Client(api_key=os.environ.get("API_KEY"))
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         config=types.GenerateContentConfig(
