@@ -2,3 +2,4 @@ fastapi
 uvicorn[standard]
 pdfplumber
 google-genai
+python-multipart
