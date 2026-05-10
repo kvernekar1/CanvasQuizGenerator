@@ -76,6 +76,12 @@
           throw new Error('Failed to check result status');
         }
 
+        const contentType = resultResponse.headers.get('content-type');
+        if (contentType && contentType.includes('application/zip')) {
+          resultReady = true;
+          break;
+        }
+
         const resultData = await resultResponse.json();
         if (resultData.status === 'complete') {
           resultReady = true;
@@ -88,7 +94,13 @@
         throw new Error('Conversion timed out after 2 minutes');
       }
 
-      const blob = await resultResponse.blob();
+      let blob;
+      if (resultResponse.headers.get('content-type')?.includes('application/zip')) {
+        blob = await resultResponse.blob();
+      } else {
+        const finalResponse = await fetch(`/result/${taskId}`);
+        blob = await finalResponse.blob();
+      }
       if(currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
       currentObjectUrl = URL.createObjectURL(blob);
 
