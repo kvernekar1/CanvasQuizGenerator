@@ -1,26 +1,76 @@
-from fastapi import FastAPI, File, UploadFile
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, File, UploadFile, BackgroundTasks
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from google import genai
 from google.genai import types
 from json_to_qti import convert
 from dotenv import load_dotenv
+import uuid
+import tempfile
 import pdfplumber
 import os
 
 load_dotenv()
 app = FastAPI()
 
+task_results = {}
+
+def _run_conversion(task_id: str, file_path: str):
+    """Background task: convert PDF/DOCX to QTI ZIP"""
+    try:
+        with open(file_path, 'rb') as f:
+            text = ""
+            with tempfile.NamedTemporaryFile(suffix=".tmp", delete=False) as tmp:
+                tmp.write(f.read())
+                tmp_path = tmp.name
+        
+        try:
+            with pdfplumber.open(tmp_path) as pdf:
+                for page in pdf.pages:
+                    text += page.extract_text() + "\n"
+        finally:
+            os.unlink(tmp_path)
+        
+        json_str = convertToJson(text)
+        outputfile = convert(json_str, output_zip=f"canvas_quiz_{task_id}.zip", quiz_title="Quiz")
+        
+        task_results[task_id] = {"status": "complete", "file": outputfile, "error": None}
+    except Exception as e:
+        task_results[task_id] = {"status": "error", "file": None, "error": str(e)}
+    finally:
+        if os.path.exists(file_path):
+            os.unlink(file_path)
+
 
 @app.post("/convert")
-def convertToQTI(file: UploadFile = File(...)):
-    text = ""
-    with pdfplumber.open(file.file) as pdf:
-        for page in pdf.pages:
-            text += page.extract_text() + "\n"
-    json_str = convertToJson(text)
-    outputfile = convert(json_str, output_zip="canvas_quiz.zip", quiz_title="Quiz")
-    return FileResponse(outputfile, media_type="application/zip", filename="canvas_quiz.zip")
+def convertToQTI(file: UploadFile = File(...), background_tasks: BackgroundTasks = None):
+    """Accept file and start background conversion, return task ID immediately"""
+    task_id = str(uuid.uuid4())
+    
+    with tempfile.NamedTemporaryFile(delete=False, suffix="") as tmp:
+        tmp.write(file.file.read())
+        tmp_path = tmp.name
+    
+    task_results[task_id] = {"status": "processing", "file": None, "error": None}
+    background_tasks.add_task(_run_conversion, task_id, tmp_path)
+    
+    return {"task_id": task_id, "status": "processing"}
+
+
+@app.get("/result/{task_id}")
+def get_result(task_id: str):
+    """Poll for conversion result or download the ZIP"""
+    if task_id not in task_results:
+        return JSONResponse({"error": "Task not found"}, status_code=404)
+    
+    result = task_results[task_id]
+    
+    if result["status"] == "processing":
+        return JSONResponse({"status": "processing", "message": "Conversion in progress..."})
+    elif result["status"] == "error":
+        return JSONResponse({"status": "error", "error": result["error"]}, status_code=500)
+    else:
+        return FileResponse(result["file"], media_type="application/zip", filename="canvas_quiz.zip")
 
 
 def convertToJson(text):

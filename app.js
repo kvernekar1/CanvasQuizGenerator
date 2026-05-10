@@ -59,7 +59,36 @@
         throw new Error(err || 'Conversion failed');
       }
 
-      const blob = await response.blob();
+      const taskData = await response.json();
+      const taskId = taskData.task_id;
+
+      let resultReady = false;
+      let resultResponse = null;
+      const maxAttempts = 120; 
+      let attempts = 0;
+
+      while (!resultReady && attempts < maxAttempts) {
+        await new Promise(r => setTimeout(r, 1000));
+        attempts++;
+
+        resultResponse = await fetch(`/result/${taskId}`);
+        if (!resultResponse.ok) {
+          throw new Error('Failed to check result status');
+        }
+
+        const resultData = await resultResponse.json();
+        if (resultData.status === 'complete') {
+          resultReady = true;
+        } else if (resultData.status === 'error') {
+          throw new Error(resultData.error || 'Conversion error');
+        }
+      }
+
+      if (!resultReady) {
+        throw new Error('Conversion timed out after 2 minutes');
+      }
+
+      const blob = await resultResponse.blob();
       if(currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
       currentObjectUrl = URL.createObjectURL(blob);
 
