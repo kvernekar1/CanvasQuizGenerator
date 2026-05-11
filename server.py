@@ -192,7 +192,8 @@ def convertToJson(text):
         """,
     )
     newtext = response.text.replace("{{", "{").replace("}}", "}").replace("[[", "[").replace("]]", "]")
-    return newtext
+    newtext2 = newtext[newtext.find("{"): newtext.rfind("}") + 1]
+    return newtext2
 
 
 app.mount("/", StaticFiles(directory=".", html=True), name="static")
