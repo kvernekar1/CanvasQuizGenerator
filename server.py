@@ -86,7 +86,7 @@ def convertToJson(text):
 
             The output must:
 
-            Start with {{
+            Start with a single {
             Be valid JSON
             Use double quotes only
             Contain no trailing commas
@@ -116,9 +116,9 @@ def convertToJson(text):
         Use the test text EXACTLY as written (word-for-word).
         Do NOT paraphrase.
         If information is missing, leave fields empty — do not invent anything.
-        REQUIRED OUTPUT STRUCTURE
 
-        Return a JSON object in this exact structure:
+        REQUIRED OUTPUT STRUCTURE
+        Return a JSON object that begins with a single opening brace.
 
         {{
         "questions": [...]
@@ -187,7 +187,8 @@ def convertToJson(text):
         {text}
         """,
     )
-    return response.text
+    newtext = response.text.replace("{{", "{").replace("}}", "}")
+    return newtext
 
 
 app.mount("/", StaticFiles(directory=".", html=True), name="static")
