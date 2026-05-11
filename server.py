@@ -78,74 +78,113 @@ def convertToJson(text):
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         config=types.GenerateContentConfig(
-            system_instruction="You are excellent at converting quizzes into JSON. Respond only in JSON format, and do not try to format it with backticks. The brackets must be first."
-        ),
-        contents=f"""
-        Can you please convert the following test I have into a JSON object with questions in it?
-        It will contain multiple-choice questions, free-response questions, matching questions, and true/false questions.
-        Please format the JSON like this:
+            system_instruction="""You are a deterministic quiz-to-JSON conversion engine.
+
+            You must respond only with valid JSON.
+
+            Do not include explanations, markdown, backticks, code blocks, or any extra text.
+
+            The output must:
+
+            Start with {{
+            Be valid JSON
+            Use double quotes only
+            Contain no trailing commas
+            Be parseable by a standard JSON parser
+            Not contain comments
+            Not contain additional keys outside the required structure
+
+            Do not infer, guess, or modify content.
+
+            Preserve all question text and answer choices exactly as written.
+
+            If information is missing, use empty strings or empty arrays as appropriate.
+            Never fabricate content.
+            """),
+        contents=f"""You are a deterministic JSON conversion engine.
+
+        Your task is to convert the provided test into a single valid JSON object.
+
+        CRITICAL RULES
+        Output ONLY valid JSON.
+        Do NOT include explanations, markdown, comments, or extra text.
+        Do NOT wrap the output in code blocks.
+        Use double quotes for all strings.
+        Do NOT use trailing commas.
+        The output must be parseable by a standard JSON parser.
+        Do NOT infer, guess, or modify content.
+        Use the test text EXACTLY as written (word-for-word).
+        Do NOT paraphrase.
+        If information is missing, leave fields empty — do not invent anything.
+        REQUIRED OUTPUT STRUCTURE
+
+        Return a JSON object in this exact structure:
+
         {{
-          "questions": [
-            {{
-              "type": "mcq",
-              "question": "Question text here",
-              "choices": ["choice A", "choice B", "choice C", "choice D"],
-              "answer": "correct choice letter (e.g., 'A')"
-            }},
-            {{
-              "type": "free_response",
-              "question": "Question text here",
-              "answer": "blank"
-            }},
-            {{
-              "type": "matching",
-              "question": "Instructions for matching here",
-              "pairs": [
-                {{"left": "Left item", "right": "Right item"}}
-              ]
-            }},
-            {{
-              "type": "true_false",
-              "question": "Question text here",
-              "answer": "true or false"
-            }}
-          ]
+        "questions": [...]
         }}
 
-        Here is a small example:
+        Each question must follow one of the formats below exactly.
+
+        Multiple Choice (mcq)
+
         {{
-          "questions": [
-            {{
-              "type": "mcq",
-              "question": "What is 2+2?",
-              "choices": ["3", "4", "5", "6"],
-              "answer": "B"
-            }},
-            {{
-              "type": "free_response",
-              "question": "Explain the process of photosynthesis.",
-              "answer": ""
-            }},
-            {{
-              "type": "matching",
-              "question": "Match the following countries with their capitals.",
-              "pairs": [
-                {{"left": "France", "right": "Paris"}},
-                {{"left": "Italy", "right": "Rome"}}
-              ]
-            }},
-            {{
-              "type": "true_false",
-              "question": "The Earth is flat.",
-              "answer": "false"
-            }}
-          ]
+        "type": "mcq",
+        "question": "exact question text",
+        "choices": ["choice A", "choice B", "choice C", "choice D"],
+        "answer": "correct choice letter"
         }}
-        Please use whatever is provided in the text WORD-FOR-WORD when generating the JSON. DO NOT PARAPHRASE.
-        Here is the test:
+
+        Rules:
+
+        Choices must appear in the order provided.
+        Answer must be a single letter (A, B, C, etc.).
+        Only use an answer if it is explicitly provided in the test.
+        Free Response (free_response)
+
+        {{
+        "type": "free_response",
+        "question": "exact question text",
+        "answer": ""
+        }}
+
+        Rules:
+
+        Always set answer to an empty string.
+        Matching (matching)
+
+        {{
+        "type": "matching",
+        "question": "exact instructions text",
+        "pairs": [
+        {{"left": "exact left item", "right": "exact right item"}}
+        ]
+        }}
+
+        Rules:
+
+        Preserve all text exactly.
+        Do not reorder pairs.
+        True/False (true_false)
+
+        {{
+        "type": "true_false",
+        "question": "exact question text",
+        "answer": "true"
+        }}
+
+        Rules:
+
+        Answer must be exactly "true" or "false".
+        Lowercase only.
+        Additional Constraints
+        Do not include any fields other than those specified.
+        Do not add metadata.
+        Do not add numbering unless it exists in the original text.
+        Preserve formatting inside question text exactly.
+        Now Convert the Following Test:
+
         {text}
-
-        Thank you!
         """,
     )
     return response.text
