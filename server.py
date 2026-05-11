@@ -16,7 +16,6 @@ app = FastAPI()
 task_results = {}
 
 def _run_conversion(task_id: str, file_path: str):
-    """Background task: convert PDF/DOCX to QTI ZIP"""
     try:
         with open(file_path, 'rb') as f:
             text = ""
@@ -44,7 +43,6 @@ def _run_conversion(task_id: str, file_path: str):
 
 @app.post("/convert")
 def convertToQTI(file: UploadFile = File(...), background_tasks: BackgroundTasks = None):
-    """Accept file and start background conversion, return task ID immediately"""
     task_id = str(uuid.uuid4())
     
     with tempfile.NamedTemporaryFile(delete=False, suffix="") as tmp:
@@ -59,7 +57,6 @@ def convertToQTI(file: UploadFile = File(...), background_tasks: BackgroundTasks
 
 @app.get("/result/{task_id}")
 def get_result(task_id: str):
-    """Poll for conversion result or download the ZIP"""
     if task_id not in task_results:
         return JSONResponse({"error": "Task not found"}, status_code=404)
     
@@ -187,7 +184,7 @@ def convertToJson(text):
         {text}
         """,
     )
-    newtext = response.text.replace("{{", "{").replace("}}", "}")
+    newtext = response.text.replace("{{", "{").replace("}}", "}").replace("[[", "[").replace("]]", "]")
     return newtext
 
 
