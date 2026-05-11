@@ -8,11 +8,13 @@ from dotenv import load_dotenv
 import uuid
 import tempfile
 import pdfplumber
+import threading
 import os
 
 load_dotenv()
 app = FastAPI()
-
+count = 0
+lock = threading.Lock()
 task_results = {}
 
 def _run_conversion(task_id: str, file_path: str):
@@ -71,7 +73,12 @@ def get_result(task_id: str):
 
 
 def convertToJson(text):
-    client = genai.Client(api_key=os.environ.get("API_KEY"))
+    global count
+    with lock:
+        key = count % 2 == 0
+        count += 1
+    api = os.environ.get("API_KEY" if key else "API_KEY2")
+    client = genai.Client(api_key=api)
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         config=types.GenerateContentConfig(
